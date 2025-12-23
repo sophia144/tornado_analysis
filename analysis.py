@@ -30,12 +30,11 @@ detail_df['state'] = details_input_df['STATE']
 detail_df['state_fips'] = details_input_df['STATE_FIPS']
 detail_df['zone'] = details_input_df['CZ_NAME']
 detail_df['zone_fips'] = details_input_df['CZ_FIPS']
-detail_df['start_year'] = details_input_df['BEGIN_YEARMONTH'].astype('str').str[0:4]
-detail_df['start_month'] = details_input_df['BEGIN_YEARMONTH'].astype('str').str[4:6]
+detail_df['start_month'] = details_input_df['BEGIN_YEARMONTH'].astype('str').str[4:6].astype('int')
 detail_df['start_day'] = details_input_df['BEGIN_DAY']
 detail_df['injuries'] = details_input_df['INJURIES_DIRECT'] + details_input_df['INJURIES_INDIRECT']
 detail_df['deaths'] = details_input_df['DEATHS_DIRECT'] + details_input_df['DEATHS_INDIRECT']
-detail_df['fujita_scale'] = details_input_df['TOR_F_SCALE']
+detail_df['fujita_scale'] = details_input_df['TOR_F_SCALE'].astype('str').str[2]
 detail_df.set_index('event_id', inplace = True)
 
 
@@ -48,16 +47,15 @@ grouped_df = fatalities_df.groupby(['event_id', 'fatality_location']).size().res
 pivot_df = grouped_df.pivot(index='event_id', columns='fatality_location', values='count').fillna(0)
 
 
-#~~~~~~~      JOINING        ~~~~~
+#~~~~~~~      JOINING FATALITY LOCATIONS        ~~~~~
 joined_df = detail_df.join(pivot_df)
 
-location_cols = ['Ball Field', 'Boating', 'Business', 'Camping', 'Church', 'Golfing',
-       'Heavy Equipment/Construction', 'In Water', 'Mobile/Trailer Home',
-       'Other', 'Outside/Open Areas', 'Permanent Home', 'Permanent Structure',
-       'Under Tree', 'Vehicle/Towed Trailer']
+#replacing all NaN values from the join with 0s
+location_cols = ['Ball Field', 'Boating', 'Business', 'Camping', 'Church', 'Golfing', 'Heavy Equipment/Construction', 'In Water', 'Mobile/Trailer Home', 'Other', 'Outside/Open Areas', 'Permanent Home', 'Permanent Structure', 'Under Tree', 'Vehicle/Towed Trailer']
 joined_df[location_cols] = joined_df[location_cols].fillna(0)
 
-print(joined_df)
+#print(detail_df['fujita_scale'].unique())
+print(detail_df[detail_df['fujita_scale'] == 'U'])
 
 
 # machine learning

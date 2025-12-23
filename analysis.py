@@ -6,6 +6,8 @@ details_file = 'StormEvents_details_2025.csv'
 input_df = pd.read_csv(details_file)
 input_df = input_df[input_df['EVENT_TYPE'] == 'Tornado']
 
+# https://www.ncei.noaa.gov/stormevents/
+
 #create new dataframe for cleaned data
 detail_df = pd.DataFrame(None)
 
@@ -22,11 +24,20 @@ detail_df['deaths'] = input_df['DEATHS_DIRECT'] + input_df['DEATHS_INDIRECT']
 detail_df['source'] = input_df['SOURCE']
 detail_df['fujita_scale'] = input_df['TOR_F_SCALE']
 
-print(detail_df)
+print(detail_df['state_fips'].sort_values().unique())
 
 # machine learning
 # split year in two halves
 # see if you can predict the dates of tornadoes
 
+# PLAN
+# make new columns - currenc
+
 # regression
 # see if you can predict the number of tornadoes and other extreme weather events happening in the future
+
+import xarray as xr
+
+ds = xr.open_dataset('ncdd-202512-grd-prelim.nc')
+df = ds.to_dataframe()
+print(df)

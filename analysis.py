@@ -9,12 +9,22 @@ import pandas as pd
 import numpy as np
 
 # import and filter raw data
-details_file = 'StormEvents_details_2025.csv'
-details_input_df = pd.read_csv(details_file)
+# details
+details_file_2024 = 'StormEvents_details_2024.csv'
+details_file_2025 = 'StormEvents_details_2025.csv'
+details_df_2024 = pd.read_csv(details_file_2024)
+details_df_2025 = pd.read_csv(details_file_2025)
+
+details_input_df = pd.concat([details_df_2024, details_df_2025], ignore_index = True)
 details_input_df = details_input_df[details_input_df['EVENT_TYPE'] == 'Tornado']
 
-fatalities_file = 'StormEvents_fatalities_2025.csv'
-fatalities_input_df = pd.read_csv(fatalities_file)
+# fatalities
+fatalities_file_2024 = 'StormEvents_fatalities_2024.csv'
+fatalities_file_2025 = 'StormEvents_fatalities_2025.csv'
+fatalities_df_2024 = pd.read_csv(fatalities_file_2024)
+fatalities_df_2025 = pd.read_csv(fatalities_file_2025)
+
+fatalities_input_df = pd.concat([fatalities_df_2024, fatalities_df_2025], ignore_index = True)
 fatalities_input_df = fatalities_input_df[fatalities_input_df['FATALITY_LOCATION'] != 'Unknown']
 
 # https://www.ncei.noaa.gov/stormevents/
@@ -31,6 +41,7 @@ detail_df['state'] = details_input_df['STATE']
 detail_df['state_fips'] = details_input_df['STATE_FIPS']
 detail_df['zone'] = details_input_df['CZ_NAME']
 detail_df['zone_fips'] = details_input_df['CZ_FIPS']
+detail_df['start_year'] = details_input_df['BEGIN_YEARMONTH'].astype('str').str[0:4].astype('int')
 detail_df['start_month'] = details_input_df['BEGIN_YEARMONTH'].astype('str').str[4:6].astype('int')
 detail_df['start_day'] = details_input_df['BEGIN_DAY']
 detail_df['injuries'] = details_input_df['INJURIES_DIRECT'] + details_input_df['INJURIES_INDIRECT']
@@ -103,11 +114,11 @@ print("Cross Validation Scores: ", scores)
 print("Average CV Score: ", scores.mean())
 print("Number of CV Scores used in Average: ", len(scores))
 
+# calculates and prints the precision, recall, and F1 score for each class
 def return_stats(y_test, y_pred):
-    # Precision, Recall, F1 Score for each class
-    print("Precision (Per Class):", precision_score(y_test, y_pred, average=None))
-    print("Recall (Per Class):", recall_score(y_test, y_pred, average=None))
-    print("F1 Score (Per Class):", f1_score(y_test, y_pred, average=None))
+    print("Precision (Per Class):", precision_score(y_test, y_pred, average=None, zero_division=0))
+    print("Recall (Per Class):", recall_score(y_test, y_pred, average=None, zero_division=0))
+    print("F1 Score (Per Class):", f1_score(y_test, y_pred, average=None, zero_division=0))
 
 return_stats(y_test, y_pred)
 

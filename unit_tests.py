@@ -8,7 +8,7 @@ class subtraction_checks(unittest.TestCase):
         expected_output = 6
         self.assertEqual(function_output, expected_output, f"Fail: expected {expected_output}, got {function_output}")
 
-        function_output = -24 - 5)
+        function_output = -24 - 5
         expected_output = -29
         self.assertEqual(function_output, expected_output, f"Fail: expected {expected_output}, got {function_output}")
 

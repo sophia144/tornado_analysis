@@ -2,7 +2,7 @@
 
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.model_selection import train_test_split, KFold, cross_val_score
-from sklearn.metrics import accuracy_score, confusion_matrix, roc_auc_score, roc_curve
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score, roc_curve
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -80,6 +80,36 @@ ml_df.loc[(ml_df['human_damage'] >= 0) & (ml_df['human_damage'] < 5), 'ideal_res
 ml_df.drop(['injuries', 'deaths', 'human_damage'], axis = 1, inplace = True)
 print(ml_df)
 
+x = ml_df.drop(['ideal_response_level'], axis = 1)
+y = pd.DataFrame(ml_df['ideal_response_level'])
+
+# encoding
+x = pd.get_dummies(x)
+y = pd.get_dummies(y)
+
+# splitting data into training and testing populations
+# 70% training and 30% testing
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=42, stratify=y) 
+clf = DecisionTreeClassifier(random_state=13, max_depth=8)
+clf = clf.fit(x_train, y_train)
+# predict the response for test dataset
+y_pred = clf.predict(x_test)
+y_probs = np.array(clf.predict_proba(x_test))[:, 1]
+
+# cross-validation
+k_folds = KFold(n_splits = 5)
+scores = cross_val_score(clf, x, y, cv = k_folds)
+print("Cross Validation Scores: ", scores)
+print("Average CV Score: ", scores.mean())
+print("Number of CV Scores used in Average: ", len(scores))
+
+def return_stats(y_test, y_pred):
+    # Precision, Recall, F1 Score for each class
+    print("Precision (Per Class):", precision_score(y_test, y_pred, average=None))
+    print("Recall (Per Class):", recall_score(y_test, y_pred, average=None))
+    print("F1 Score (Per Class):", f1_score(y_test, y_pred, average=None))
+
+return_stats(y_test, y_pred)
 
 # regression
 # see if you can predict the number of tornadoes and other extreme weather events happening in the future

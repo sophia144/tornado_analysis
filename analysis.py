@@ -5,6 +5,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, r
 from sklearn.preprocessing import LabelEncoder
 
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import pandas as pd
 import numpy as np
 
@@ -188,14 +189,87 @@ def return_stats_2(y_test, y_pred, class_names=le.classes_):
     print("Recall (Per Class):", recall)
     print("F1 Score (Per Class):", f1)
 
-return_stats_1(scores)
-print('\n')
-return_stats_2(y_test, y_pred)
+# return_stats_1(scores)
+# print('\n')
+# return_stats_2(y_test, y_pred)
 
 
 
 
 
 
-# regression
+#~~~~~~~      REGRESSION        ~~~~~
+
 # see if you can predict the number of tornadoes and other extreme weather events happening in the future
+regression_df = detail_df
+
+# converting the three integer columns into one date column
+regression_df['date'] = pd.to_datetime(
+    dict(year = regression_df['start_year'], month = regression_df['start_month'], day = regression_df['start_day']),
+    errors = 'raise'
+)
+# creating a cumulative measure
+date_count = regression_df['date'].value_counts().sort_index()
+cumulative_count = date_count.cumsum()
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~ GRAPH 1 ~~~~~~~~~~~~~~~~~~~~~~
+
+# setting up parameters for plotting
+x_axis = cumulative_count.index
+x_axis_label = "Date"
+y_axis = cumulative_count.values
+y_axis_label = "Cumulative Tornado Count"
+
+title = "Cumulative Count of Tornadoes across the USA"
+
+# plotting the main data
+plt.grid(alpha=0.5)
+plt.plot(x_axis, y_axis)
+plt.xlabel(x_axis_label)
+plt.ylabel(y_axis_label)
+plt.title(title, pad=20)
+plt.xticks(rotation=45)
+
+# setting up containers for stats
+order_vals = []
+chi_squared_vals = []
+chi_squared_dof_vals = []
+bic_vals = []
+uncertainty = 0.1
+
+for order in range(1, 8):
+    # changing the x_axis datatypes from dates to integers as polyfit only works on numbers
+    x_num = mdates.date2num(x_axis)
+
+    order_vals.append(order)
+
+    #calculations and plotting
+    coefficients = np.polyfit(x_num, y_axis, order)
+    poly_function = np.poly1d(coefficients)
+
+    #chi squared calculation
+    residuals = poly_function(x_num) - y_axis
+    chi_squared = 0
+    for residual in residuals:
+        chi_squared += (residual ** 2) / (uncertainty ** 2)
+    chi_squared_vals.append(chi_squared)
+
+    #chi squared by degrees of freedom
+    degrees_of_freedom = len(x_axis) - (order + 1)
+    chi_squared_dof = chi_squared/degrees_of_freedom
+    chi_squared_dof_vals.append(chi_squared_dof)
+
+    #bic calculations
+    bic = chi_squared + ((order + 1) * np.log(len(x_axis)))
+    bic_vals.append(bic)
+
+    #plotting each polynomial
+    plt.plot(x_axis, poly_function(x_num), color='orange', alpha=0.3, lw=1.8)
+
+plt.show()
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~ GRAPH 2 ~~~~~~~~~~~~~~~~~~~~~~
+
+#   change this to weekly but not cumulative

@@ -208,12 +208,17 @@ regression_df['date'] = pd.to_datetime(
     dict(year = regression_df['start_year'], month = regression_df['start_month'], day = regression_df['start_day']),
     errors = 'raise'
 )
-# creating a cumulative measure
+# creating a daily cumulative measure
 date_count = regression_df['date'].value_counts().sort_index()
 cumulative_count = date_count.cumsum()
 
+# creating a weekly standalone measure
+weekly_count = date_count.resample('W').sum()
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~ GRAPH 1 ~~~~~~~~~~~~~~~~~~~~~~
+
+plt.figure()
 
 # setting up parameters for plotting
 x_axis = cumulative_count.index
@@ -241,6 +246,9 @@ uncertainty = 0.1
 for order in range(1, 8):
     # changing the x_axis datatypes from dates to integers as polyfit only works on numbers
     x_num = mdates.date2num(x_axis)
+    # centering the axis around the mean to avoid large numbers
+    x_mean = x_num.mean()
+    x_num = x_num - x_mean
 
     order_vals.append(order)
 
@@ -272,4 +280,61 @@ plt.show()
 
 # ~~~~~~~~~~~~~~~~~~~~~~ GRAPH 2 ~~~~~~~~~~~~~~~~~~~~~~
 
-#   change this to weekly but not cumulative
+plt.figure()
+
+# setting up parameters for plotting
+x_axis = weekly_count.index
+x_axis_label = "Week Beginning"
+y_axis = weekly_count.values
+y_axis_label = "Weekly Tornado Count"
+
+title = "Weekly Count of Tornadoes across the USA"
+
+# plotting the main data
+plt.grid(alpha=0.5)
+plt.plot(x_axis, y_axis)
+plt.xlabel(x_axis_label)
+plt.ylabel(y_axis_label)
+plt.title(title, pad=20)
+plt.xticks(rotation=45)
+
+# setting up containers for stats
+order_vals = []
+chi_squared_vals = []
+chi_squared_dof_vals = []
+bic_vals = []
+uncertainty = 0.1
+
+for order in range(1, 8):
+    # changing the x_axis datatypes from dates to integers as polyfit only works on numbers
+    x_num = mdates.date2num(x_axis)
+    # centering the axis around the mean to avoid large numbers
+    x_mean = x_num.mean()
+    x_num = x_num - x_mean
+
+    order_vals.append(order)
+
+    #calculations and plotting
+    coefficients = np.polyfit(x_num, y_axis, order)
+    poly_function = np.poly1d(coefficients)
+
+    #chi squared calculation
+    residuals = poly_function(x_num) - y_axis
+    chi_squared = 0
+    for residual in residuals:
+        chi_squared += (residual ** 2) / (uncertainty ** 2)
+    chi_squared_vals.append(chi_squared)
+
+    #chi squared by degrees of freedom
+    degrees_of_freedom = len(x_axis) - (order + 1)
+    chi_squared_dof = chi_squared/degrees_of_freedom
+    chi_squared_dof_vals.append(chi_squared_dof)
+
+    #bic calculations
+    bic = chi_squared + ((order + 1) * np.log(len(x_axis)))
+    bic_vals.append(bic)
+
+    #plotting each polynomial
+    plt.plot(x_axis, poly_function(x_num), color='orange', alpha=0.3, lw=1.8)
+
+plt.show()

@@ -22,6 +22,8 @@ details_file_2025 = 'StormEvents_details_2025.csv'
 details_df_2024 = pd.read_csv(details_file_2024)
 details_df_2025 = pd.read_csv(details_file_2025)
 details_input_df = pd.concat([details_df_2024, details_df_2025], ignore_index = True)
+# creating a duplicate table for analysis needing all records
+all_weather_input_df = details_input_df
 # filtering out all weather events which are not tornadoes
 details_input_df = details_input_df[details_input_df['EVENT_TYPE'] == 'Tornado']
 
@@ -41,6 +43,7 @@ locations_input_df = pd.concat([locations_df_2024, locations_df_2025], ignore_in
 
 # create new dataframes for cleaned data
 detail_df = pd.DataFrame(None)
+all_weather_df = pd.DataFrame(None)
 fatalities_df = pd.DataFrame(None)
 locations_df = pd.DataFrame(None)
 
@@ -66,6 +69,21 @@ detail_df['injuries'] = details_input_df['INJURIES_DIRECT'] + details_input_df['
 detail_df['deaths'] = details_input_df['DEATHS_DIRECT'] + details_input_df['DEATHS_INDIRECT']
 # replacing EFU with -1 to show the intensity is unknown
 detail_df['fujita_scale'] = detail_df['fujita_scale'].replace('U', -1)
+
+
+#~~~~~~~      ALL WEATHER CLEANING        ~~~~~
+all_weather_df['episode_id'] = all_weather_input_df['EPISODE_ID']
+all_weather_df['event_id'] = all_weather_input_df['EVENT_ID']
+all_weather_df['event_type'] = all_weather_input_df['EVENT_TYPE']
+all_weather_df['state'] = all_weather_input_df['STATE']
+all_weather_df['state_fips'] = all_weather_input_df['STATE_FIPS']
+all_weather_df['zone'] = all_weather_input_df['CZ_NAME']
+all_weather_df['zone_fips'] = all_weather_input_df['CZ_FIPS']
+all_weather_df['start_year'] = all_weather_input_df['BEGIN_YEARMONTH'].astype('str').str[0:4].astype('int')
+all_weather_df['start_month'] = all_weather_input_df['BEGIN_YEARMONTH'].astype('str').str[4:6].astype('int')
+all_weather_df['start_day'] = all_weather_input_df['BEGIN_DAY']
+all_weather_df['injuries'] = all_weather_input_df['INJURIES_DIRECT'] + all_weather_input_df['INJURIES_INDIRECT']
+all_weather_df['deaths'] = all_weather_input_df['DEATHS_DIRECT'] + all_weather_input_df['DEATHS_INDIRECT']
 
 
 
@@ -121,9 +139,35 @@ joined_df[location_cols] = joined_df[location_cols].fillna(0)
 
 
 
-#~~~~~~~      INITIAL ANALYSIS        ~~~~~
+#~~~~~~~      INITIAL ANALYSIS 1        ~~~~~
+
+# what proportion of extreme weather events in the US do tornadoes make up?
+
+all_weather_count = len(all_weather_df.index)
+tornado_count = len(all_weather_df[all_weather_df['event_type'] == 'Tornado'].index)
+tornado_occurrence_proportion = tornado_count/all_weather_count
+# tornadoes made up 2.83% of extreme weather events in 2024-5
+
+damage_grouping = all_weather_df.groupby('event_type')[['injuries', 'deaths']].sum()
+
+all_weather_injuries = damage_grouping['injuries'].sum()
+all_weather_deaths = damage_grouping['deaths'].sum()
+tornado_injuries = int(damage_grouping[damage_grouping.index == 'Tornado']['injuries'].iloc[0])
+tornado_deaths = int(damage_grouping[damage_grouping.index == 'Tornado']['deaths'].iloc[0])
+
+tornado_injury_proportion = tornado_injuries/all_weather_injuries
+# tornadoes were responsible for 31.81% of weather related injuries in 2024-5
+tornado_fatality_proportion = tornado_deaths/all_weather_deaths
+# tornadoes were responsible for 6.54% of weather related injuries in 2024-5
+
+def output_overall_statistics(tornado_occurrence_proportion, tornado_injury_proportion, tornado_fatility_proportion):
+    print('Occurrence Proportion: ', tornado_occurrence_proportion)
+    print('Injury Proportion: ', tornado_injury_proportion)
+    print('Fatality Proportion: ', tornado_fatality_proportion)
 
 
+
+exit()
 
 
 

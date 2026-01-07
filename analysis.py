@@ -148,6 +148,56 @@ tornado_count = len(all_weather_df[all_weather_df['event_type'] == 'Tornado'].in
 tornado_occurrence_proportion = tornado_count/all_weather_count
 # tornadoes made up 2.83% of extreme weather events in 2024-5
 
+# deciding when to start bucketing weather events into an 'other' column
+weather_by_occurrence = all_weather_df['event_type'].value_counts()
+position_10 = weather_by_occurrence.nlargest(10).iloc[-1]
+
+bucketing_threshold = position_10
+print(position_10)
+
+weather_by_occurrence = weather_by_occurrence.to_frame(name = 'occurrences')
+weather_by_occurrence['bucket'] = weather_by_occurrence.index
+# where the number of occurrences is below the bucketing threshold, assign it to the bucket Other
+mask = weather_by_occurrence['occurrences'] < bucketing_threshold
+weather_by_occurrence.loc[mask, 'bucket'] = 'Other'
+
+# grouping by bucket
+weather_by_occurrence = weather_by_occurrence.groupby('bucket')['occurrences'].sum()
+weather_by_occurrence.sort_values(ascending=False, inplace=True)
+print(weather_by_occurrence)
+
+
+# creating the bar graph
+
+# setting up parameters for plotting
+x_axis = weather_by_occurrence.index
+x_axis_label = "Event"
+y_axis = weather_by_occurrence.values
+y_axis_label = "Occurrences"
+title = "Count of Weather Events by Type across the USA (2024-5)"
+
+
+# plotting and formatting
+plt.figure(figsize=(8, 10))          
+x_pos = np.arange(len(x_axis))
+plt.bar(x_pos, y_axis, align='center')      
+plt.xticks(x_pos, x_axis, rotation=45, ha='right') 
+plt.xlabel(x_axis_label)
+plt.ylabel(y_axis_label)
+plt.title(title, pad=20)
+plt.tight_layout()                    
+
+plt.show()
+
+
+
+
+
+
+#~~~~~~~      INITIAL ANALYSIS 2        ~~~~~
+
+# what proportion of weather related injuries and fatalities in the US do tornadoes make up?
+
 damage_grouping = all_weather_df.groupby('event_type')[['injuries', 'deaths']].sum()
 
 all_weather_injuries = damage_grouping['injuries'].sum()
@@ -157,17 +207,62 @@ tornado_deaths = int(damage_grouping[damage_grouping.index == 'Tornado']['deaths
 
 tornado_injury_proportion = tornado_injuries/all_weather_injuries
 # tornadoes were responsible for 31.81% of weather related injuries in 2024-5
+# 6 times overrepresented in casualty data
 tornado_fatality_proportion = tornado_deaths/all_weather_deaths
 # tornadoes were responsible for 6.54% of weather related injuries in 2024-5
 
-def output_overall_statistics(tornado_occurrence_proportion, tornado_injury_proportion, tornado_fatility_proportion):
+
+# deciding when to start bucketing weather events into an 'other' column
+position_10 = damage_grouping.nlargest(10, 'injuries').iloc[-1]
+bucketing_threshold = position_10['injuries']
+damage_grouping['bucket'] = damage_grouping.index
+
+# where the number of occurrences is below the bucketing threshold, assign it to the bucket Other
+mask = damage_grouping['injuries'] < bucketing_threshold
+damage_grouping.loc[mask, 'bucket'] = 'Other'
+
+# grouping by bucket
+damage_grouping = damage_grouping.groupby('bucket')[['injuries', 'deaths']].sum()
+damage_grouping.sort_values(ascending=False, inplace=True, by='injuries')
+print(damage_grouping)
+
+
+
+
+# creating the bar graph
+
+# setting up parameters for plotting
+x_axis = damage_grouping.index
+x_axis_label = "Event"
+y_axis_1 = damage_grouping['injuries']
+y_axis_2 = damage_grouping['deaths']
+y_axis_label = "Occurrences"
+title = "Count of Weather Events by Type across the USA (2024-5)"
+
+
+# plotting and formatting
+plt.figure(figsize=(8, 10))          
+x_pos = np.arange(len(x_axis))
+width = 0.4
+plt.bar(x_pos - width/2, y_axis_1, width=width, align='center', label='Injuries')    
+plt.bar(x_pos + width/2, y_axis_2, width=width, align='center', label='Deaths')   
+plt.xticks(x_pos, x_axis, rotation=45, ha='right') 
+plt.xlabel(x_axis_label)
+plt.ylabel(y_axis_label)
+plt.title(title, pad=20)
+plt.tight_layout()                    
+plt.legend()
+
+plt.show()
+
+exit()
+
+
+def output_context_statistics(tornado_occurrence_proportion, tornado_injury_proportion, tornado_fatility_proportion):
     print('Occurrence Proportion: ', tornado_occurrence_proportion)
     print('Injury Proportion: ', tornado_injury_proportion)
     print('Fatality Proportion: ', tornado_fatality_proportion)
 
-
-
-exit()
 
 
 

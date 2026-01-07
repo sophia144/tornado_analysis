@@ -121,6 +121,10 @@ joined_df[location_cols] = joined_df[location_cols].fillna(0)
 
 
 
+#~~~~~~~      INITIAL ANALYSIS        ~~~~~
+
+
+
 
 
 
@@ -230,7 +234,7 @@ title = "Cumulative Count of Tornadoes across the USA"
 
 # plotting the main data
 plt.grid(alpha=0.5)
-plt.plot(x_axis, y_axis)
+plt.scatter(x_axis, y_axis, s=8, label='Raw Data')
 plt.xlabel(x_axis_label)
 plt.ylabel(y_axis_label)
 plt.title(title, pad=20)
@@ -243,6 +247,7 @@ chi_squared_dof_vals = []
 bic_vals = []
 uncertainty = 0.1
 
+# computing statistics for each polynomial
 for order in range(1, 8):
     # changing the x_axis datatypes from dates to integers as polyfit only works on numbers
     x_num = mdates.date2num(x_axis)
@@ -272,10 +277,20 @@ for order in range(1, 8):
     bic = chi_squared + ((order + 1) * np.log(len(x_axis)))
     bic_vals.append(bic)
 
-    #plotting each polynomial
-    plt.plot(x_axis, poly_function(x_num), color='orange', alpha=0.3, lw=1.8)
 
+# finding the best fit
+
+best_bic = bic_vals.index(min(bic_vals)) + 1
+coefficients = np.polyfit(x_num, y_axis, best_bic)
+poly_function = np.poly1d(coefficients)
+plt.plot(x_axis, poly_function(x_num), color='orange', alpha=0.8, lw=1.8, label='Polynomial Fit')
+
+plt.legend()
 plt.show()
+
+
+
+
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~ GRAPH 2 ~~~~~~~~~~~~~~~~~~~~~~
@@ -292,7 +307,7 @@ title = "Weekly Count of Tornadoes across the USA"
 
 # plotting the main data
 plt.grid(alpha=0.5)
-plt.plot(x_axis, y_axis)
+plt.plot(x_axis, y_axis, label='Raw Data')
 plt.xlabel(x_axis_label)
 plt.ylabel(y_axis_label)
 plt.title(title, pad=20)
@@ -334,7 +349,11 @@ for order in range(1, 8):
     bic = chi_squared + ((order + 1) * np.log(len(x_axis)))
     bic_vals.append(bic)
 
-    #plotting each polynomial
-    plt.plot(x_axis, poly_function(x_num), color='orange', alpha=0.3, lw=1.8)
+# plotting the best fit
+best_bic = bic_vals.index(min(bic_vals)) + 1
+coefficients = np.polyfit(x_num, y_axis, best_bic)
+poly_function = np.poly1d(coefficients)
+plt.plot(x_axis, poly_function(x_num), color='orange', alpha=0.7, lw=1.8, label='Polynomial Fit')
 
+plt.legend()
 plt.show()

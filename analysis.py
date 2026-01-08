@@ -67,7 +67,7 @@ detail_df['start_month'] = details_input_df['BEGIN_YEARMONTH'].astype('str').str
 detail_df['start_day'] = details_input_df['BEGIN_DAY']
 detail_df['injuries'] = details_input_df['INJURIES_DIRECT'] + details_input_df['INJURIES_INDIRECT']
 detail_df['deaths'] = details_input_df['DEATHS_DIRECT'] + details_input_df['DEATHS_INDIRECT']
-# replacing EFU with -1 to show the intensity is unknown
+# replacing EFU with -1 to say the intensity is unknown
 detail_df['fujita_scale'] = detail_df['fujita_scale'].replace('U', -1)
 
 
@@ -185,7 +185,8 @@ plt.ylabel(y_axis_label)
 plt.title(title, pad=20)
 plt.tight_layout()                    
 
-plt.show()
+plt.savefig("1_EventsByType.png", dpi=300)
+plt.close()
 
 
 
@@ -254,7 +255,8 @@ plt.title(title, pad=20)
 plt.tight_layout()                    
 plt.legend()
 
-plt.show()
+plt.savefig("2_CasualtiesByType.png", dpi=300)
+plt.close()
 
 
 
@@ -286,7 +288,7 @@ def output_affected_states(most_injuries, most_deaths):
 
 
 # graphing
-# deciding when to start bucketing s into an 'other' column
+# deciding when to start bucketing into an 'other' column
 position_10 = state_grouping.nlargest(10, 'injuries').iloc[-1]
 bucketing_threshold = position_10['injuries']
 state_grouping['bucket'] = state_grouping.index
@@ -328,7 +330,8 @@ plt.title(title, pad=20)
 plt.tight_layout()                    
 plt.legend()
 
-plt.show()
+plt.savefig("3_CasualtiesByState.png", dpi=300)
+plt.close()
 
 
 # calculating weighted casualties (per tornado event)
@@ -368,7 +371,12 @@ plt.title(title, pad=20)
 plt.tight_layout()                    
 plt.legend()
 
-plt.show()
+plt.savefig("4_AverageCasualtiesByEvent.png", dpi=300)
+plt.close()
+
+
+
+
 
 #~~~~~~~      INITIAL ANALYSIS 4        ~~~~~
 
@@ -385,14 +393,14 @@ intensity_df = intensity_df.unstack('state', fill_value=0)
 
 # removing any rows for unknown/unmeasured events (ie. EFU)
 intensity_df = intensity_df.drop(-1)
-print(intensity_df)
+
 
 # creating a stacked bar chart
-
 plt.figure(figsize=(8, 10))   
 
 # input data
 intensity_df.index = intensity_df.index.astype(int)
+title = "Tornado Intensity by State"
 x = intensity_df.columns
 y0 = intensity_df.loc[0]
 y1 = intensity_df.loc[1]
@@ -401,13 +409,24 @@ y3 = intensity_df.loc[3]
 y4 = intensity_df.loc[4]
 
 # plot bars in stack manner
-plt.bar(x, y4, color='peachpuff')
-plt.bar(x, y3, bottom=y4, color='lightcoral')
-plt.bar(x, y2, bottom=y4+y3, color='indianred')
-plt.bar(x, y1, bottom=y4+y3+y2, color='brown')
-plt.bar(x, y0, bottom=y4+y3+y2+y1, color='maroon')
+plt.bar(x, y0, color='peachpuff', label='EF0')
+plt.bar(x, y1, bottom=y0, color='lightcoral', label='EF1')
+plt.bar(x, y2, bottom=y0+y1, color='indianred', label='EF2')
+plt.bar(x, y3, bottom=y0+y1+y2, color='brown', label='EF3')
+plt.bar(x, y4, bottom=y0+y1+y2+y3, color='maroon', label='EF4')
+
+# formatting
+plt.title(title, pad=20)
+plt.xlabel(x_axis_label)
+plt.ylabel(y_axis_label)
+plt.title(title, pad=20)
+plt.tight_layout()                    
+plt.legend()
+
 # i think this is wrong as it is showing more ef5s than there are ef0s ??????
+plt.savefig("5_CasualtiesByState.png", dpi=300)
 plt.show()
+plt.close()
 
 
 
@@ -572,7 +591,8 @@ poly_function = np.poly1d(coefficients)
 plt.plot(x_axis, poly_function(x_num), color='orange', alpha=0.8, lw=1.8, label='Polynomial Fit')
 
 plt.legend()
-plt.show()
+plt.savefig("6_CumulativeTornadoEvents.png", dpi=300)
+plt.close()
 
 
 
@@ -642,4 +662,5 @@ poly_function = np.poly1d(coefficients)
 plt.plot(x_axis, poly_function(x_num), color='orange', alpha=0.7, lw=1.8, label='Polynomial Fit')
 
 plt.legend()
-plt.show()
+plt.savefig("7_WeeklyTornadoCount.png", dpi=300)
+plt.close()

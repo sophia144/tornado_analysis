@@ -153,7 +153,6 @@ weather_by_occurrence = all_weather_df['event_type'].value_counts()
 position_10 = weather_by_occurrence.nlargest(10).iloc[-1]
 
 bucketing_threshold = position_10
-print(position_10)
 
 weather_by_occurrence = weather_by_occurrence.to_frame(name = 'occurrences')
 weather_by_occurrence['bucket'] = weather_by_occurrence.index
@@ -164,7 +163,6 @@ weather_by_occurrence.loc[mask, 'bucket'] = 'Other'
 # grouping by bucket
 weather_by_occurrence = weather_by_occurrence.groupby('bucket')['occurrences'].sum()
 weather_by_occurrence.sort_values(ascending=False, inplace=True)
-print(weather_by_occurrence)
 
 
 # creating the bar graph
@@ -211,7 +209,14 @@ tornado_injury_proportion = tornado_injuries/all_weather_injuries
 tornado_fatality_proportion = tornado_deaths/all_weather_deaths
 # tornadoes were responsible for 6.54% of weather related injuries in 2024-5
 
+def output_context_statistics(tornado_occurrence_proportion, tornado_injury_proportion, tornado_fatility_proportion):
+    print('Occurrence Proportion: ', tornado_occurrence_proportion)
+    print('Injury Proportion: ', tornado_injury_proportion)
+    print('Fatality Proportion: ', tornado_fatality_proportion)
 
+
+
+# graphing
 # deciding when to start bucketing weather events into an 'other' column
 position_10 = damage_grouping.nlargest(10, 'injuries').iloc[-1]
 bucketing_threshold = position_10['injuries']
@@ -224,10 +229,6 @@ damage_grouping.loc[mask, 'bucket'] = 'Other'
 # grouping by bucket
 damage_grouping = damage_grouping.groupby('bucket')[['injuries', 'deaths']].sum()
 damage_grouping.sort_values(ascending=False, inplace=True, by='injuries')
-print(damage_grouping)
-
-
-
 
 # creating the bar graph
 
@@ -236,8 +237,8 @@ x_axis = damage_grouping.index
 x_axis_label = "Event"
 y_axis_1 = damage_grouping['injuries']
 y_axis_2 = damage_grouping['deaths']
-y_axis_label = "Occurrences"
-title = "Count of Weather Events by Type across the USA (2024-5)"
+y_axis_label = "Casualties"
+title = "Casualties by Type of Weather Event across the USA (2024-5)"
 
 
 # plotting and formatting
@@ -255,19 +256,131 @@ plt.legend()
 
 plt.show()
 
+
+
+
+
+
+#~~~~~~~      INITIAL ANALYSIS 3        ~~~~~
+
+# which areas of the US are worst affected by tornadoes?
+
+
+# by injuries and deaths
+state_grouping = detail_df.groupby('state')[['injuries', 'deaths']].sum()
+
+total_tornado_injuries = state_grouping['injuries'].sum()
+total_tornado_deaths = state_grouping['deaths'].sum()
+
+most_injuries = state_grouping.loc[state_grouping['injuries'].idxmax()]
+most_deaths = state_grouping.loc[state_grouping['injuries'].idxmax()]
+
+
+def output_affected_states(most_injuries, most_deaths):
+    injuries_state = most_injuries.name.title()
+    injuries_count = most_injuries['injuries']
+    print('The worst-affected state by injuries is', injuries_state, 'with a total injury count of', injuries_count)
+    deaths_state = most_deaths.name.title()
+    deaths_count = most_deaths['deaths']
+    print('The worst-affected state by death toll is', deaths_state, 'with a total fatality count of', deaths_count)
+
+
+# graphing
+# deciding when to start bucketing s into an 'other' column
+position_10 = state_grouping.nlargest(10, 'injuries').iloc[-1]
+bucketing_threshold = position_10['injuries']
+state_grouping['bucket'] = state_grouping.index
+
+# where the number of occurrences is below the bucketing threshold, assign it to the bucket Other
+mask = state_grouping['injuries'] < bucketing_threshold
+state_grouping.loc[mask, 'bucket'] = 'Other'
+state_grouping = state_grouping[state_grouping['bucket'] != 'Other']
+top_10_states = list(state_grouping.index)
+
+# grouping by bucket
+state_grouping = state_grouping.groupby('bucket')[['injuries', 'deaths']].sum()
+state_grouping.sort_values(ascending=False, inplace=True, by='injuries')
+
+
+
+# UNWEIGHTED CASUALTIES BY STATE
+# creating the bar graph
+
+# setting up parameters for plotting
+x_axis = state_grouping.index
+x_axis_label = "State"
+y_axis_1 = state_grouping['injuries']
+y_axis_2 = state_grouping['deaths']
+y_axis_label = "Casualties"
+title = "Tornado Casualties by State across the USA (2024-5)"
+
+
+# plotting and formatting
+plt.figure(figsize=(8, 10))          
+x_pos = np.arange(len(x_axis))
+width = 0.4
+plt.bar(x_pos - width/2, y_axis_1, width=width, align='center', label='Injuries')    
+plt.bar(x_pos + width/2, y_axis_2, width=width, align='center', label='Deaths')   
+plt.xticks(x_pos, x_axis, rotation=45, ha='right') 
+plt.xlabel(x_axis_label)
+plt.ylabel(y_axis_label)
+plt.title(title, pad=20)
+plt.tight_layout()                    
+plt.legend()
+
+plt.show()
+
+
+# calculating weighted casualties (per tornado event)
+occurrences_by_state = detail_df.value_counts('state')
+occurrences_by_state = occurrences_by_state[occurrences_by_state.index.isin(top_10_states)]
+
+weighted_data = state_grouping.join(occurrences_by_state)
+weighted_data['injuries_per_event'] = weighted_data['injuries']/weighted_data['count']
+weighted_data['deaths_per_event'] = weighted_data['deaths']/weighted_data['count']
+
+
+
+
+# WEIGHTED CASUALTIES BY STATE - ie. where are tornadoes the deadliest
+# creating the bar graph
+
+# setting up parameters for plotting
+x_axis = weighted_data.index
+x_axis_label = "State"
+y_axis_1 = weighted_data['injuries_per_event']
+y_axis_2 = weighted_data['deaths_per_event']
+y_axis_label = "Casualties per Tornado Event"
+title = "Average Casualties per Tornado Event by State across the USA (2024-5)"
+
+
+# plotting and formatting
+plt.figure(figsize=(8, 10))          
+x_pos = np.arange(len(x_axis))
+width = 0.4
+plt.bar(x_pos - width/2, y_axis_1, width=width, align='center', label='Injuries per Tornado Event')    
+plt.bar(x_pos + width/2, y_axis_2, width=width, align='center', label='Deaths per Tornado Event')   
+plt.xticks(x_pos, x_axis, rotation=45, ha='right') 
+plt.xlabel(x_axis_label)
+plt.ylabel(y_axis_label)
+plt.title(title, pad=20)
+plt.tight_layout()                    
+plt.legend()
+
+plt.show()
+
 exit()
 
+#~~~~~~~      INITIAL ANALYSIS 4        ~~~~~
 
-def output_context_statistics(tornado_occurrence_proportion, tornado_injury_proportion, tornado_fatility_proportion):
-    print('Occurrence Proportion: ', tornado_occurrence_proportion)
-    print('Injury Proportion: ', tornado_injury_proportion)
-    print('Fatality Proportion: ', tornado_fatality_proportion)
+# how do most casualties occur, and does this vary by state?
 
-
+print(detail_df)
 
 
+#~~~~~~~      INITIAL ANALYSIS 5        ~~~~~
 
-
+# are tornadoes of different intensities evenly spread between states?
 
 
 

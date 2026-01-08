@@ -409,8 +409,6 @@ plt.bar(x, y0, bottom=y4+y3+y2+y1, color='maroon')
 # i think this is wrong as it is showing more ef5s than there are ef0s ??????
 plt.show()
 
-exit()
-
 
 
 #~~~~~~~      INITIAL ANALYSIS 5        ~~~~~

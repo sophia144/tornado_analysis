@@ -22,7 +22,7 @@ details_file_2025 = 'StormEvents_details_2025.csv'
 details_df_2024 = pd.read_csv(details_file_2024)
 details_df_2025 = pd.read_csv(details_file_2025)
 details_input_df = pd.concat([details_df_2024, details_df_2025], ignore_index = True)
-# creating a duplicate table for analysis needing all records
+# creating a duplicate table for analysis needing all weather event records
 all_weather_input_df = details_input_df
 # filtering out all weather events which are not tornadoes
 details_input_df = details_input_df[details_input_df['EVENT_TYPE'] == 'Tornado']
@@ -208,7 +208,7 @@ tornado_injury_proportion = tornado_injuries/all_weather_injuries
 # tornadoes were responsible for 31.81% of weather related injuries in 2024-5
 # 6 times overrepresented in casualty data
 tornado_fatality_proportion = tornado_deaths/all_weather_deaths
-# tornadoes were responsible for 6.54% of weather related injuries in 2024-5
+# tornadoes were responsible for 6.54% of weather related fatalities in 2024-5
 
 def output_context_statistics(tornado_occurrence_proportion, tornado_injury_proportion, tornado_fatility_proportion):
     print('Occurrence Proportion: ', tornado_occurrence_proportion)
@@ -286,6 +286,7 @@ def output_affected_states(most_injuries, most_deaths):
     deaths_count = most_deaths['deaths']
     print('The worst-affected state by death toll is', deaths_state, 'with a total fatality count of', deaths_count)
 
+output_affected_states(most_injuries, most_deaths)
 
 # graphing
 # deciding when to start bucketing into an 'other' column
@@ -409,21 +410,22 @@ y3 = intensity_df.loc[3]
 y4 = intensity_df.loc[4]
 
 # plot bars in stack manner
-plt.bar(x, y0, color='peachpuff', label='EF0')
-plt.bar(x, y1, bottom=y0, color='lightcoral', label='EF1')
-plt.bar(x, y2, bottom=y0+y1, color='indianred', label='EF2')
-plt.bar(x, y3, bottom=y0+y1+y2, color='brown', label='EF3')
-plt.bar(x, y4, bottom=y0+y1+y2+y3, color='maroon', label='EF4')
+colors = ['peachpuff', 'lightcoral', 'indianred', 'brown', 'maroon']
+labels = ['EF0', 'EF1', 'EF2', 'EF3', 'EF4']
+plt.bar(x, y0, color=colors[0], label=labels[0])
+plt.bar(x, y1, bottom=y0, color=colors[1], label=labels[1])
+plt.bar(x, y2, bottom=y0+y1, color=colors[2], label=labels[2])
+plt.bar(x, y3, bottom=y0+y1+y2, color=colors[3], label=labels[3])
+plt.bar(x, y4, bottom=y0+y1+y2+y3, color=colors[4], label=labels[4])
 
 # formatting
 plt.title(title, pad=20)
 plt.xlabel(x_axis_label)
 plt.ylabel(y_axis_label)
-plt.title(title, pad=20)
 plt.tight_layout()                    
 plt.legend()
 
-plt.savefig("5_CasualtiesByState.png", dpi=300)
+plt.savefig("5_IntensityByState.png", dpi=300)
 plt.close()
 
 
@@ -444,7 +446,8 @@ plt.close()
 # ...and hence the level of emergency response required
 
 # removing colunms which will not be used for training or testing
-ml_df = location_detail_df.reset_index().drop(['event_id', 'state_fips', 'zone_fips', 'start_day', 'location'], axis=1)
+cols_to_drop = ['event_id', 'state_fips', 'zone_fips', 'start_day', 'location']
+ml_df = location_detail_df.reset_index().drop(cols_to_drop, axis=1)
 
 # creating a human_damage metric which will feed into the ideal_response_level, giving different weightings to deaths vs injuries
 ml_df['human_damage'] = (ml_df['deaths'] * 4) + ml_df['injuries']
@@ -487,6 +490,8 @@ def return_stats_1(scores):
     print("Average CV Score: ", scores.mean())
     print("Number of CV Scores used in Average: ", len(scores))
 
+return_stats_1(scores)
+
 # calculates and prints the precision, recall, and F1 score for each class
 def return_stats_2(y_test, y_pred, class_names=le.classes_):
     print(list(class_names))
@@ -499,7 +504,7 @@ def return_stats_2(y_test, y_pred, class_names=le.classes_):
     print("Recall (Per Class):", recall)
     print("F1 Score (Per Class):", f1)
 
-
+return_stats_2(y_test, y_pred)
 
 
 
@@ -507,7 +512,6 @@ def return_stats_2(y_test, y_pred, class_names=le.classes_):
 
 #~~~~~~~      REGRESSION        ~~~~~
 
-# see if you can predict the number of tornadoes and other extreme weather events happening in the future
 regression_df = detail_df
 
 # converting the three integer columns into one date column
@@ -662,3 +666,5 @@ plt.plot(x_axis, poly_function(x_num), color='orange', alpha=0.7, lw=1.8, label=
 plt.legend()
 plt.savefig("7_WeeklyTornadoCount.png", dpi=300)
 plt.close()
+
+print(regression_df['date'].max())

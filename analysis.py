@@ -75,7 +75,7 @@ detail_df['fujita_scale'] = detail_df['fujita_scale'].replace('U', -1)
 all_weather_df['episode_id'] = all_weather_input_df['EPISODE_ID']
 all_weather_df['event_id'] = all_weather_input_df['EVENT_ID']
 all_weather_df['event_type'] = all_weather_input_df['EVENT_TYPE']
-all_weather_df['state'] = all_weather_input_df['STATE']
+all_weather_df['state'] = all_weather_input_df['STATE'].str.title()
 all_weather_df['state_fips'] = all_weather_input_df['STATE_FIPS']
 all_weather_df['zone'] = all_weather_input_df['CZ_NAME']
 all_weather_df['zone_fips'] = all_weather_input_df['CZ_FIPS']
@@ -423,9 +423,7 @@ plt.title(title, pad=20)
 plt.tight_layout()                    
 plt.legend()
 
-# i think this is wrong as it is showing more ef5s than there are ef0s ??????
 plt.savefig("5_CasualtiesByState.png", dpi=300)
-plt.show()
 plt.close()
 
 

@@ -332,6 +332,7 @@ plt.show()
 
 
 # calculating weighted casualties (per tornado event)
+
 occurrences_by_state = detail_df.value_counts('state')
 occurrences_by_state = occurrences_by_state[occurrences_by_state.index.isin(top_10_states)]
 
@@ -369,18 +370,56 @@ plt.legend()
 
 plt.show()
 
-exit()
-
 #~~~~~~~      INITIAL ANALYSIS 4        ~~~~~
 
-# how do most casualties occur, and does this vary by state?
+# are tornadoes of different intensities evenly spread between states?
 
-print(detail_df)
+# finding the three states with the most recorded tornadoes
+state_count = detail_df.groupby('state')['episode_id'].count()
+state_count = state_count.sort_values(ascending=False)
+top_count = state_count.index[:6]
+
+# grouping by each level of the fujita scale
+intensity_df = detail_df[detail_df['state'].isin(top_count)].groupby(['fujita_scale', 'state']).size()
+intensity_df = intensity_df.unstack('state', fill_value=0)
+
+# removing any rows for unknown/unmeasured events (ie. EFU)
+intensity_df = intensity_df.drop(-1)
+print(intensity_df)
+
+# creating a stacked bar chart
+
+plt.figure(figsize=(8, 10))   
+
+# input data
+intensity_df.index = intensity_df.index.astype(int)
+x = intensity_df.columns
+y0 = intensity_df.loc[0]
+y1 = intensity_df.loc[1]
+y2 = intensity_df.loc[2]
+y3 = intensity_df.loc[3]
+y4 = intensity_df.loc[4]
+
+# plot bars in stack manner
+plt.bar(x, y4, color='peachpuff')
+plt.bar(x, y3, bottom=y4, color='lightcoral')
+plt.bar(x, y2, bottom=y4+y3, color='indianred')
+plt.bar(x, y1, bottom=y4+y3+y2, color='brown')
+plt.bar(x, y0, bottom=y4+y3+y2+y1, color='maroon')
+# i think this is wrong as it is showing more ef5s than there are ef0s ??????
+plt.show()
+
+exit()
+
 
 
 #~~~~~~~      INITIAL ANALYSIS 5        ~~~~~
 
-# are tornadoes of different intensities evenly spread between states?
+# how do most casualties occur, and does this vary by state?
+# bonus - for personal study after assignment is in
+
+
+
 
 
 
@@ -445,9 +484,6 @@ def return_stats_2(y_test, y_pred, class_names=le.classes_):
     print("Recall (Per Class):", recall)
     print("F1 Score (Per Class):", f1)
 
-# return_stats_1(scores)
-# print('\n')
-# return_stats_2(y_test, y_pred)
 
 
 
